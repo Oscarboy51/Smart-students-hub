@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Arena – Smart Student Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Nunito',sans-serif;}
+  :root{--primary:#ff6b00;--secondary:#1a1a2e;--bg:#f4f7ff;--card:rgba(255,255,255,0.9);--text:#1a1a2e;--muted:#7c8db5;--border:#e2e8f0;--shadow:0 10px 30px rgba(0,0,0,0.08);--green:#2ECC71;--red:#E74C3C;}
+  body.dark{--bg:#0b1628;--card:rgba(17,30,53,0.95);--text:#ffffff;--muted:#9db0d1;--border:#24334f;}
+  body{background:var(--bg);color:var(--text);padding:20px;transition:.3s;}
+  .container{max-width:1400px;margin:auto;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin-bottom:20px;}
+  .topbar h1{font-size:30px;font-weight:800;}
+  .top-actions{display:flex;gap:10px;flex-wrap:wrap;}
+  .btn{border:none;padding:12px 18px;border-radius:14px;cursor:pointer;font-weight:700;transition:.3s;font-family:'Nunito',sans-serif;}
+  .btn-primary{background:linear-gradient(135deg,#ff6b00,#ff9248);color:white;}
+  .btn-outline{background:var(--card);border:1px solid var(--border);color:var(--text);}
+  .btn:hover{transform:translateY(-2px);}
+  .grid{display:grid;grid-template-columns:320px 1fr;gap:20px;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:20px;box-shadow:var(--shadow);backdrop-filter:blur(12px);}
+  .card h2,.card h3{margin-bottom:15px;}
+  input,select,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,0.7);margin-bottom:12px;color:#000;font-family:'Nunito',sans-serif;font-size:14px;}
+  body.dark input,body.dark select,body.dark textarea{background:#15233d;color:#fff;}
+  .analytics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:20px;}
+  .analytics-card{background:linear-gradient(135deg,rgba(255,107,0,.1),rgba(255,255,255,.1));padding:20px;border-radius:18px;text-align:center;border:1px solid var(--border);}
+  .analytics-card strong{display:block;font-size:28px;color:var(--primary);margin-bottom:6px;}
+  .question-item{padding:15px;border:1px solid var(--border);border-radius:18px;margin-bottom:12px;}
+  .option{border:2px solid var(--border);padding:12px 16px;border-radius:12px;margin-bottom:10px;cursor:pointer;transition:all .2s;font-weight:600;}
+  .option:hover{border-color:var(--primary);background:rgba(255,107,0,.05);}
+  .option.selected{background:rgba(255,107,0,.15);border-color:var(--primary);}
+  .option.correct{background:rgba(46,204,113,.2);border-color:#2ECC71;color:#27AE60;}
+  .option.wrong{background:rgba(231,76,60,.15);border-color:#E74C3C;color:#E74C3C;}
+  .hidden{display:none;}
+  .progress-bar{height:8px;background:var(--border);border-radius:4px;margin-bottom:16px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,#ff6b00,#FFD700);border-radius:4px;transition:width .4s;}
+  .timer-wrap{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+  .timer-circle{width:52px;height:52px;border-radius:50%;background:var(--secondary);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex-shrink:0;}
+  .timer-circle.danger{background:var(--red);animation:pulse .5s infinite alternate;}
+  @keyframes pulse{to{transform:scale(1.1);}}
+  .result-banner{background:linear-gradient(135deg,#FF6B00,#FFD700);border-radius:18px;padding:28px;text-align:center;color:white;margin-bottom:16px;}
+  .result-banner .big-score{font-size:56px;font-weight:900;line-height:1;}
+  .result-banner .grade-label{font-size:22px;font-weight:800;margin-top:6px;}
+  .result-banner .sub{font-size:14px;opacity:.88;margin-top:6px;}
+  .points-earned{background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.4);border-radius:12px;padding:14px;text-align:center;margin-bottom:14px;}
+  .points-earned .pts{font-size:32px;font-weight:900;color:var(--primary);}
+  .points-earned .lbl{font-size:13px;color:var(--muted);font-weight:700;}
+  .streak-banner{background:linear-gradient(135deg,#FF4500,#FF6B00);border-radius:12px;padding:14px 18px;color:white;display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+  .streak-banner .num{font-size:32px;font-weight:900;}
+  .streak-banner .info{font-size:13px;opacity:.9;}
+  .token-banner{background:linear-gradient(135deg,#9B59B6,#6C3483);border-radius:12px;padding:14px 18px;color:white;display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+  .q-counter{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:8px;}
+  .toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+  .toast{padding:13px 18px;border-radius:13px;font-size:13px;font-weight:700;color:white;box-shadow:0 8px 24px rgba(0,0,0,.2);animation:sli .3s ease forwards;display:flex;align-items:center;gap:9px;min-width:240px;}
+  .toast.success{background:linear-gradient(135deg,#2ECC71,#27AE60);}
+  .toast.error{background:linear-gradient(135deg,#E74C3C,#C0392B);}
+  .toast.info{background:linear-gradient(135deg,#3498DB,#2980B9);}
+  @keyframes sli{from{transform:translateX(120%);}to{transform:translateX(0);}}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr;}}
+  @media(max-width:700px){.topbar{flex-direction:column;align-items:flex-start;}.top-actions,.btn{width:100%;}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="topbar">
+    <div><h1>🧠 Quiz Arena</h1><p>Admin-managed quiz system with faculties, programs and courses.</p></div>
+    <div class="top-actions">
+      <button class="btn btn-outline" onclick="toggleTheme()">🌗 Theme</button>
+      <button class="btn btn-outline" onclick="window.location='dash.html'">📊 Dashboard</button>
+      <button class="btn btn-outline" onclick="window.location='marketplace.html'">🛒 Marketplace</button>
+      <button class="btn btn-primary" onclick="logout()">🚪 Logout</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="card" id="adminSection">
+        <h2>Admin Panel</h2>
+        <input id="faculty" placeholder="Faculty">
+        <input id="program" placeholder="Program">
+        <input id="courseCode" placeholder="Course Code">
+        <input id="courseTitle" placeholder="Course Title">
+        <textarea id="question" placeholder="Question" style="min-height:80px;"></textarea>
+        <input id="optionA" placeholder="Option A">
+        <input id="optionB" placeholder="Option B">
+        <input id="optionC" placeholder="Option C">
+        <input id="optionD" placeholder="Option D">
+        <select id="correctAnswer">
+          <option value="0">Option A – Correct</option>
+          <option value="1">Option B – Correct</option>
+          <option value="2">Option C – Correct</option>
+          <option value="3">Option D – Correct</option>
+        </select>
+        <button class="btn btn-primary" onclick="saveQuestion()">💾 Save Question</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="analytics-grid" id="analyticsGrid"></div>
+
+        <!-- Quiz Selection -->
+        <div id="quizSelectionSection">
+          <h2>🎯 Start a Quiz</h2>
+          <select id="facultySelect" onchange="loadPrograms()"></select>
+          <select id="programSelect" onchange="loadCourses()"></select>
+          <select id="courseSelect"></select>
+          <button class="btn btn-primary" onclick="startQuiz()" style="width:100%;">▶️ Start Quiz</button>
+        </div>
+
+        <!-- Quiz Card -->
+        <div id="quizCard" class="hidden" style="margin-top:20px;">
+          <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+          <div class="timer-wrap">
+            <div class="timer-circle" id="timerCircle">30</div>
+            <div style="flex:1"><div class="q-counter" id="qCounter">Question 1 of 10</div><div style="font-size:13px;color:var(--muted);font-weight:700;">Answer before time runs out!</div></div>
+          </div>
+          <div id="quizContent"></div>
+        </div>
+
+        <!-- Result Card -->
+        <div id="resultCard" class="hidden" style="margin-top:20px;"></div>
+
+        <!-- Question list (admin only) -->
+        <div id="questionList" style="margin-top:20px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* ===== STATE ===== */
+let currentUser = JSON.parse(localStorage.getItem('currentUser'));
+if(!currentUser){ window.location='lg.html'; }
+
+let quizQuestions = JSON.parse(localStorage.getItem('quizQuestions')) || [];
+let filteredQuestions = [];
+let currentIndex = 0;
+let sessionScore = 0;
+let selectedAnswer = null;
+let timerInterval = null;
+let timeLeft = 30;
+
+if(localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
+
+/* ===== HELPERS ===== */
+function toggleTheme(){ document.body.classList.toggle('dark'); localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light'); }
+function logout(){ localStorage.removeItem('currentUser'); window.location='lg.html'; }
+
+function toast(msg, type='info'){
+  const icons={success:'✅',error:'❌',info:'ℹ️'};
+  const t=document.createElement('div'); t.className=`toast ${type}`;
+  t.innerHTML=`<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(()=>t.remove(), 3500);
+}
+
+function refreshCurrentUser(){
+  const users = JSON.parse(localStorage.getItem('users')) || [];
+  const fresh = users.find(u => u.username === currentUser.username);
+  if(fresh){ currentUser = fresh; localStorage.setItem('currentUser', JSON.stringify(fresh)); }
+}
+
+/* ===== ADMIN PANEL ===== */
+function saveQuestion(){
+  const questionObj = {
+    id: Date.now(),
+    faculty: document.getElementById('faculty').value.trim(),
+    program: document.getElementById('program').value.trim(),
+    courseCode: document.getElementById('courseCode').value.trim(),
+    courseTitle: document.getElementById('courseTitle').value.trim(),
+    question: document.getElementById('question').value.trim(),
+    optionA: document.getElementById('optionA').value.trim(),
+    optionB: document.getElementById('optionB').value.trim(),
+    optionC: document.getElementById('optionC').value.trim(),
+    optionD: document.getElementById('optionD').value.trim(),
+    correctAnswer: document.getElementById('correctAnswer').value
+  };
+  if(!questionObj.faculty||!questionObj.question||!questionObj.optionA){ toast('Fill all required fields','error'); return; }
+  quizQuestions.push(questionObj);
+  localStorage.setItem('quizQuestions', JSON.stringify(quizQuestions));
+  ['faculty','program','courseCode','courseTitle','question','optionA','optionB','optionC','optionD'].forEach(id=>document.getElementById(id).value='');
+  toast('Question saved!','success');
+  renderQuestions();
+  loadDropdowns();
+  updateAnalytics();
+}
+
+function renderQuestions(){
+  const list = document.getElementById('questionList');
+  if(currentUser.role !== 'admin'){ document.getElementById('adminSection').classList.add('hidden'); list.innerHTML=''; return; }
+  list.innerHTML = quizQuestions.length ? '<h3 style="margin-bottom:12px;">📋 Saved Questions (' + quizQuestions.length + ')</h3>' + quizQuestions.map(q=>`
+    <div class="question-item">
+      <div style="font-weight:800;margin-bottom:4px;">${q.courseTitle} <span style="font-size:11px;color:var(--muted);font-weight:600;">${q.faculty} › ${q.program}</span></div>
+      <div style="font-size:14px;margin-bottom:8px;">${q.question}</div>
+      <div style="font-size:12px;color:var(--muted);">A: ${q.optionA} | B: ${q.optionB} | C: ${q.optionC} | D: ${q.optionD}</div>
+      <div style="font-size:12px;color:#2ECC71;font-weight:700;margin-top:4px;">✓ Answer: Option ${['A','B','C','D'][q.correctAnswer]}</div>
+      <button class="btn btn-outline" onclick="deleteQuestion(${q.id})" style="margin-top:8px;padding:7px 14px;font-size:12px;">🗑️ Delete</button>
+    </div>`).join('') : '<p style="color:var(--muted);text-align:center;padding:20px;">No questions added yet.</p>';
+}
+
+function deleteQuestion(id){
+  quizQuestions = quizQuestions.filter(q=>q.id!==id);
+  localStorage.setItem('quizQuestions',JSON.stringify(quizQuestions));
+  toast('Question deleted','info');
+  renderQuestions(); loadDropdowns(); updateAnalytics();
+}
+
+/* ===== DROPDOWNS ===== */
+function loadDropdowns(){
+  const faculties = [...new Set(quizQuestions.map(q=>q.faculty).filter(Boolean))];
+  document.getElementById('facultySelect').innerHTML = '<option value="">Select Faculty</option>' + faculties.map(f=>`<option>${f}</option>`).join('');
+  document.getElementById('programSelect').innerHTML = '<option value="">Select Program</option>';
+  document.getElementById('courseSelect').innerHTML = '<option value="">Select Course</option>';
+}
+
+function loadPrograms(){
+  const fac = document.getElementById('facultySelect').value;
+  const programs = [...new Set(quizQuestions.filter(q=>q.faculty===fac).map(q=>q.program))];
+  document.getElementById('programSelect').innerHTML = '<option value="">Select Program</option>' + programs.map(p=>`<option>${p}</option>`).join('');
+  document.getElementById('courseSelect').innerHTML = '<option value="">Select Course</option>';
+}
+
+function loadCourses(){
+  const fac = document.getElementById('facultySelect').value;
+  const prog = document.getElementById('programSelect').value;
+  const courses = [...new Set(quizQuestions.filter(q=>q.faculty===fac&&q.program===prog).map(q=>q.courseTitle))];
+  document.getElementById('courseSelect').innerHTML = '<option value="">Select Course</option>' + courses.map(c=>`<option>${c}</option>`).join('');
+}
+
+/* ===== QUIZ ENGINE ===== */
+function startQuiz(){
+  const fac = document.getElementById('facultySelect').value;
+  const prog = document.getElementById('programSelect').value;
+  const course = document.getElementById('courseSelect').value;
+  if(!fac||!prog||!course||fac==='Select Faculty'){ toast('Please select Faculty, Program and Course','error'); return; }
+
+  filteredQuestions = quizQuestions.filter(q=>q.faculty===fac&&q.program===prog&&q.courseTitle===course);
+  if(!filteredQuestions.length){ toast('No questions found for this selection. Admin must add questions.','error'); return; }
+
+  // Shuffle questions
+  filteredQuestions = filteredQuestions.sort(()=>Math.random()-.5);
+
+  currentIndex = 0;
+  sessionScore = 0;
+  selectedAnswer = null;
+  document.getElementById('quizSelectionSection').classList.add('hidden');
+  document.getElementById('resultCard').classList.add('hidden');
+  document.getElementById('quizCard').classList.remove('hidden');
+  showQuestion();
+}
+
+function startTimer(){
+  clearInterval(timerInterval);
+  timeLeft = 30;
+  const circle = document.getElementById('timerCircle');
+  circle.textContent = timeLeft;
+  circle.classList.remove('danger');
+  timerInterval = setInterval(()=>{
+    timeLeft--;
+    if(circle){ circle.textContent = timeLeft; if(timeLeft<=10) circle.classList.add('danger'); }
+    if(timeLeft<=0){ clearInterval(timerInterval); autoNext(); }
+  }, 1000);
+}
+
+function autoNext(){
+  // Auto advance if no answer selected
+  if(selectedAnswer===null) selectedAnswer = -1;
+  nextQuestion();
+}
+
+function showQuestion(){
+  const q = filteredQuestions[currentIndex];
+  selectedAnswer = null;
+  const pct = ((currentIndex)/filteredQuestions.length)*100;
+  document.getElementById('progressFill').style.width = pct+'%';
+  document.getElementById('qCounter').textContent = `Question ${currentIndex+1} of ${filteredQuestions.length}`;
+
+  document.getElementById('quizContent').innerHTML = `
+    <h3 style="margin-bottom:16px;font-size:17px;line-height:1.5;">${q.question}</h3>
+    <div class="option" onclick="selectOption(this,0)" id="opt0">${q.optionA}</div>
+    <div class="option" onclick="selectOption(this,1)" id="opt1">${q.optionB}</div>
+    <div class="option" onclick="selectOption(this,2)" id="opt2">${q.optionC}</div>
+    <div class="option" onclick="selectOption(this,3)" id="opt3">${q.optionD}</div>
+    <button class="btn btn-primary" onclick="nextQuestion()" style="width:100%;margin-top:8px;">
+      ${currentIndex===filteredQuestions.length-1 ? '✅ Submit Quiz' : 'Next Question →'}
+    </button>`;
+  startTimer();
+}
+
+function selectOption(el, index){
+  document.querySelectorAll('.option').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedAnswer = index;
+}
+
+function nextQuestion(){
+  clearInterval(timerInterval);
+  if(selectedAnswer===null){ toast('Please select an answer first!','error'); return; }
+
+  const q = filteredQuestions[currentIndex];
+  const correct = parseInt(q.correctAnswer);
+  const isCorrect = selectedAnswer === correct;
+
+  // Flash correct/wrong
+  document.querySelectorAll('.option').forEach((el,i)=>{
+    if(i===correct) el.classList.add('correct');
+    else if(i===selectedAnswer&&!isCorrect) el.classList.add('wrong');
+  });
+  // Disable all options
+  document.querySelectorAll('.option').forEach(o=>o.style.pointerEvents='none');
+
+  if(isCorrect) sessionScore++;
+
+  if(currentIndex < filteredQuestions.length-1){
+    setTimeout(()=>{ currentIndex++; showQuestion(); }, 800);
+  } else {
+    setTimeout(()=>showResults(), 800);
+  }
+}
+
+/* ===== RESULTS & SAVING ===== */
+function showResults(){
+  clearInterval(timerInterval);
+  document.getElementById('quizCard').classList.add('hidden');
+  document.getElementById('resultCard').classList.remove('hidden');
+  document.getElementById('quizSelectionSection').classList.remove('hidden');
+
+  const total = filteredQuestions.length;
+  const pct = Math.round((sessionScore/total)*100);
+  const pts = sessionScore * 10; // 10 points per correct answer
+  const grade = pct>=80?'A':pct>=65?'B':pct>=50?'C':'F';
+  const gradeMsg = pct>=80?'Excellent! 🌟':pct>=65?'Good work! 👍':pct>=50?'Not bad! 📖':'Keep practicing! 💪';
+  const course = filteredQuestions[0]?.courseTitle || 'Quiz';
+  const today = new Date().toDateString();
+
+  // ---- SAVE RESULT ----
+  const result = {
+    studentId: currentUser.studentId,
+    username: currentUser.username,
+    course: course,
+    courseTitle: course,
+    score: sessionScore,
+    total: total,
+    points: pts,
+    percentage: pct,
+    date: new Date().toLocaleDateString()
+  };
+
+  const allResults = JSON.parse(localStorage.getItem('results')) || [];
+  allResults.push(result);
+  localStorage.setItem('results', JSON.stringify(allResults));
+
+  // ---- UPDATE USER ---- streak, points, monthly points, tokens
+  refreshCurrentUser();
+  let users = JSON.parse(localStorage.getItem('users')) || [];
+  let uIdx = users.findIndex(u => u.username === currentUser.username);
+  if(uIdx >= 0){
+    let u = {...users[uIdx]};
+
+    // Streak logic
+    const lastDate = u.lastQuizDate || '';
+    const yesterday = new Date(Date.now()-86400000).toDateString();
+    if(lastDate === today){
+      // Already took quiz today — no streak change
+    } else if(lastDate === yesterday){
+      // Consecutive day!
+      u.quizStreak = (u.quizStreak || 0) + 1;
+    } else if(!lastDate){
+      u.quizStreak = 1;
+    } else {
+      // Missed day(s) — reset
+      u.quizStreak = 1;
+    }
+    u.lastQuizDate = today;
+
+    // Points
+    const oldPts = u.points || 0;
+    u.points = oldPts + pts;
+    u.monthlyPoints = (u.monthlyPoints || 0) + pts;
+
+    // Token from 50 correct answers
+    const totalCorrect = allResults
+      .filter(r => (r.studentId && r.studentId === u.studentId) || r.username === u.username)
+      .reduce((a,b)=>a+(b.score||0), 0);
+    const earnedTokensFromCorrect = Math.floor(totalCorrect / 50);
+    const prevGranted = u.correctAnswerTokensGranted || 0;
+    const newTokens = earnedTokensFromCorrect - prevGranted;
+    if(newTokens > 0){
+      u.discountTokens = (u.discountTokens || 0) + newTokens;
+      u.correctAnswerTokensGranted = earnedTokensFromCorrect;
+    }
+
+    users[uIdx] = u;
+    localStorage.setItem('users', JSON.stringify(users));
+    localStorage.setItem('currentUser', JSON.stringify(u));
+    currentUser = u;
+
+    // ---- RENDER RESULTS ----
+    const streakHtml = u.quizStreak > 1
+      ? `<div class="streak-banner"><div class="num">🔥${u.quizStreak}</div><div class="info">Day streak! Keep it up every day!</div></div>`
+      : `<div class="streak-banner" style="background:linear-gradient(135deg,#2ECC71,#27AE60);"><div class="num">🔥1</div><div class="info">Streak started! Come back tomorrow!</div></div>`;
+
+    const tokenHtml = newTokens > 0
+      ? `<div class="token-banner"><div style="font-size:24px;">🎟️</div><div><div style="font-weight:800;font-size:16px;">+${newTokens} Token${newTokens>1?'s':''}!</div><div class="info">You answered 50 correct answers! (= GHS ${(newTokens*5).toFixed(2)})</div></div></div>`
+      : '';
+
+    document.getElementById('resultCard').innerHTML = `
+      <div class="result-banner">
+        <div class="big-score">${pct}%</div>
+        <div class="grade-label">Grade ${grade} – ${gradeMsg}</div>
+        <div class="sub">${sessionScore} out of ${total} correct</div>
+      </div>
+      <div class="points-earned">
+        <div class="pts">+${pts} pts</div>
+        <div class="lbl">Points earned this quiz • Total: ${u.points} pts</div>
+      </div>
+      ${streakHtml}
+      ${tokenHtml}
+      <button class="btn btn-primary" onclick="retakeQuiz()" style="width:100%;margin-bottom:10px;">🔄 Take Another Quiz</button>
+      <button class="btn btn-outline" onclick="window.location='dash.html'" style="width:100%;">📊 View Dashboard</button>`;
+
+    if(newTokens > 0) toast(`🎟️ +${newTokens} token(s) earned for 50 correct answers!`, 'success');
+    if(u.quizStreak >= 7) toast(`🔥 ${u.quizStreak} day streak! You're on fire!`, 'success');
+  }
+}
+
+function retakeQuiz(){
+  document.getElementById('resultCard').classList.add('hidden');
+  document.getElementById('resultCard').innerHTML = '';
+}
+
+/* ===== ANALYTICS ===== */
+function updateAnalytics(){
+  const myResults = (JSON.parse(localStorage.getItem('results'))||[]).filter(r=>(r.studentId&&r.studentId===currentUser.studentId)||r.username===currentUser.username);
+  const streak = currentUser.quizStreak || 0;
+  const tokens = currentUser.discountTokens || 0;
+  document.getElementById('analyticsGrid').innerHTML = `
+    <div class="analytics-card"><strong>${quizQuestions.length}</strong>Total Questions</div>
+    <div class="analytics-card"><strong>${myResults.length}</strong>My Quizzes</div>
+    <div class="analytics-card"><strong>${myResults.reduce((a,b)=>a+(b.points||0),0)}</strong>My Points</div>
+    <div class="analytics-card"><strong>🔥${streak}</strong>Day Streak</div>
+    <div class="analytics-card"><strong>🎟️${tokens}</strong>Tokens (GHS ${(tokens*5).toFixed(2)})</div>`;
+}
+
+/* ===== INIT ===== */
+renderQuestions();
+loadDropdowns();
+updateAnalytics();
+</script>
+</body>
+</html>
